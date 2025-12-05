@@ -1,5 +1,5 @@
 // ===== API для отзывов (Google Apps Script) =====
-const REVIEWS_API = "https://script.google.com/macros/s/AKfycbw1kblvoyY-y8GHFrNlpaOUE0MCTS9674COAyEbOwD-gTwV5fBVJI7nE42aDa4p7pxatw/exec";
+const REVIEWS_API = "https://script.google.com/macros/s/AKfycbwyBdPzhffjqRugEq2yY_3OFISYwxxoT7D-B3yKml9f7ZamdTqlyYtwsLz7y5tWRwCffQ/exec";
 
 // для сравнения, изменились ли отзывы
 let lastReviewsHash = null;
@@ -119,9 +119,8 @@ async function loadReviews(options = {}) {
 
 
 // ===== Инициализация формы отзыва на сайте =====
-function initReviewForm() {
+document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("review-form");
-    if (!form) return;
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -134,25 +133,35 @@ function initReviewForm() {
             source: "site",
         };
 
+        console.log("Данные формы:", body);  // Логирование данных
+
         if (!body.name || !body.text || !body.rating) {
+            console.log("Ошибка: не все поля заполнены");
             return;
         }
 
         try {
-            await fetch(REVIEWS_API, {
+            const response = await fetch(REVIEWS_API, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
             });
 
-            form.reset();
-            // подгружаем отзывы с подсветкой свежего
-            loadReviews({ highlightFirst: true });
+            const result = await response.json();
+            console.log("Ответ от сервера:", result);
+
+            if (result.status === "ok") {
+                form.reset();
+                loadReviews({ highlightFirst: true });
+            } else {
+                console.log("Ошибка при отправке отзыва:", result.message);
+            }
         } catch (err) {
             console.error("Ошибка отправки отзыва:", err);
         }
     });
-}
+});
+
 
 
 // ===== Основная инициализация страницы =====
